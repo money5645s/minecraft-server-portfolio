@@ -1,2356 +1,404 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<meta content="마인크래프트 서버 시스템 개발, UI, 모델링 포트폴리오" name="description"/>
-<meta content="light dark" name="color-scheme"/>
-<script>
-  try {
-    const savedTheme = localStorage.getItem("portfolio-theme");
-    if (savedTheme === "dark") document.documentElement.dataset.theme = "dark";
-  } catch (error) {}
-</script>
-<title>Server Developer — Minecraft Portfolio</title>
-<style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CHOROK Studio — 마인크래프트 콘텐츠 개발 스튜디오">
+  <title>CHOROK Studio — Minecraft Content Studio</title>
+  <style>
     :root {
-      --bg: #07090d;
-      --panel: #10141c;
-      --panel-soft: #151b25;
-      --line: rgba(255, 255, 255, 0.1);
-      --line-strong: rgba(255, 255, 255, 0.18);
-      --text: #f4f7fb;
-      --muted: #9ba6b6;
-      --green: #8affb7;
-      --cyan: #69d7ff;
-      --yellow: #ffd36a;
-      --pink: #ff8fb2;
-      --purple: #c6a3ff;
-      --max: 1240px;
-      --radius: 28px;
-      --shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+      --ink: #f4f6f3;
+      --muted: #a5ada5;
+      --line: rgba(244, 246, 243, .2);
+      --canvas: #060908;
+      --panel: #101714;
+      --green: #b9f874;
+      --green-deep: #71bc38;
+      --max: 1440px;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       min-width: 320px;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 0%, rgba(105, 215, 255, 0.11), transparent 30rem),
-        radial-gradient(circle at 88% 10%, rgba(138, 255, 183, 0.08), transparent 28rem),
-        var(--bg);
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
       font-family: Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
-      line-height: 1.65;
+      line-height: 1.55;
       overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+    img { display: block; max-width: 100%; }
+    .container { width: min(calc(100% - 48px), var(--max)); margin-inline: auto; }
+
+    .loader {
+      position: fixed; inset: 0; z-index: 100;
+      display: grid; place-items: center;
+      background: #050806; transition: opacity .55s ease, visibility .55s ease;
+    }
+    .loader.done { visibility: hidden; opacity: 0; pointer-events: none; }
+    .loader-mark { display: grid; justify-items: center; gap: 18px; }
+    .loader-sign { width: 64px; height: 64px; overflow: hidden; border-radius: 15px; background: #fff; }
+    .loader-sign img { width: 100%; height: 100%; object-fit: cover; }
+    .loader-mark strong { font-size: .86rem; letter-spacing: .17em; }
+    .loader-line { width: 126px; height: 2px; overflow: hidden; background: rgba(255,255,255,.14); }
+    .loader-line::after { content: ""; display: block; width: 58%; height: 100%; background: var(--green); animation: loading 1s ease-in-out infinite; }
+    @keyframes loading { from { transform: translateX(-110%); } to { transform: translateX(190%); } }
+
+    .topbar { position: fixed; inset: 0 0 auto; z-index: 10; transition: background .25s ease, backdrop-filter .25s ease; }
+    .topbar.scrolled { background: rgba(5, 8, 6, .8); backdrop-filter: blur(16px); }
+    .nav { min-height: 96px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: inline-flex; align-items: center; gap: 11px; font-size: .9rem; font-weight: 900; letter-spacing: .04em; }
+    .brand-mark { width: 38px; height: 38px; overflow: hidden; border: 1px solid rgba(185,248,116,.7); border-radius: 10px; background: #fff; }
+    .brand-mark img { width: 100%; height: 100%; object-fit: cover; }
+    .brand small { color: var(--muted); font-size: .58rem; font-weight: 800; letter-spacing: .13em; }
+    .nav-links { display: flex; align-items: center; gap: 26px; margin: 0; padding: 0; list-style: none; color: rgba(255,255,255,.82); font-size: .77rem; font-weight: 800; letter-spacing: .05em; }
+    .nav-links a { position: relative; padding: 8px 0; color: rgba(255,255,255,.62); transition: color .2s ease; }
+    .nav-links a::after { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 1px; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .22s ease; }
+    .nav-links a:hover, .nav-links a.active { color: var(--green); }
+    .nav-links a.active::after { transform: scaleX(1); }
+    .nav-cta { padding: 11px 16px; border: 1px solid var(--green); color: #081006; background: var(--green); }
+
+    .hero { position: relative; min-height: 100svh; display: flex; align-items: center; overflow: hidden; isolation: isolate; }
+    .hero-background { position: absolute; inset: 0; z-index: -2; background: url("assets/worlds/a16.jfif") center / cover no-repeat; transform: scale(1.03); transition: background-image .8s ease; }
+    .hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at center, rgba(3,7,5,.16), rgba(3,7,5,.76) 82%), linear-gradient(0deg, #060908 0%, transparent 34%), linear-gradient(180deg, rgba(3,7,5,.44), transparent 32%); }
+    .hero-content { width: 100%; padding: 112px 0 40px; }
+    .hero-copy { display: grid; justify-items: center; max-width: 980px; margin-inline: auto; text-align: center; }
+    .kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; color: var(--green); font-size: .73rem; font-weight: 900; letter-spacing: .19em; }
+    .kicker::before { content: none; }
+    h1 { max-width: 760px; margin: 0; font-size: clamp(3.5rem, 8.2vw, 8.7rem); font-weight: 900; line-height: .83; letter-spacing: -.085em; text-wrap: balance; }
+    h1 em { color: var(--green); font-style: normal; }
+    .hero-platforms { max-width: 630px; margin: 30px 0 0; color: rgba(255,255,255,.78); font-size: clamp(.8rem, 1.25vw, 1rem); font-weight: 700; line-height: 1.7; letter-spacing: .01em; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 0 19px; border: 1px solid var(--line); font-weight: 900; font-size: .84rem; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+    .button:hover { transform: translateY(-3px); }
+    .button-primary { border-color: var(--green); color: #071006; background: var(--green); }
+    .button-secondary { background: rgba(4,8,6,.38); backdrop-filter: blur(10px); }
+
+    section { padding: 140px 0; }
+    .section-label { margin: 0 0 17px; color: var(--green); font-size: .7rem; font-weight: 900; letter-spacing: .18em; }
+    h2 { margin: 0; font-size: clamp(2.7rem, 5.6vw, 6rem); line-height: .92; letter-spacing: -.075em; text-wrap: balance; }
+    .section-intro { max-width: 570px; margin: 27px 0 0; color: var(--muted); font-size: 1.02rem; }
+
+    .studio { background: #0a100d; }
+    .studio-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(44px, 7vw, 120px); align-items: end; }
+    .studio-points { display: grid; gap: 0; border-top: 1px solid var(--line); }
+    .studio-point { display: grid; grid-template-columns: 70px 1fr; gap: 18px; padding: 23px 0; border-bottom: 1px solid var(--line); }
+    .studio-point strong { color: var(--green); font-size: .72rem; letter-spacing: .1em; }
+    .studio-point h3 { margin: 0; font-size: 1.18rem; }
+    .studio-point p { margin: 6px 0 0; color: var(--muted); font-size: .92rem; }
+
+    .archive-head { display: flex; align-items: end; justify-content: space-between; gap: 30px; margin-bottom: 44px; }
+    .archive-head .section-intro { margin-bottom: 4px; }
+    .world-grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-rows: 180px; gap: 12px; }
+    .world-card { position: relative; grid-column: span 4; overflow: hidden; background: #111; }
+    .world-card.tall { grid-row: span 2; }
+    .world-card.wide { grid-column: span 8; }
+    .world-card img { width: 100%; height: 100%; object-fit: cover; transition: transform .55s cubic-bezier(.2,.8,.2,1), filter .4s ease; }
+    .world-card iframe { width: 100%; height: 100%; border: 0; pointer-events: none; }
+    .world-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.72), transparent 54%); }
+    .world-card:hover img { filter: saturate(1.1); transform: scale(1.06); }
+    .world-card-label { position: absolute; z-index: 1; left: 18px; bottom: 15px; display: grid; gap: 2px; }
+    .world-card-label small { color: var(--green); font-size: .62rem; font-weight: 900; letter-spacing: .14em; }
+    .world-card-label strong { font-size: .93rem; }
+    .project-viewer { width: 100vw; max-width: none; height: 100vh; height: 100svh; margin: 0; padding: 0; border: 0; background: #030504; overflow: hidden; }
+    .project-viewer::backdrop { background: rgba(0,0,0,.92); }
+    .project-viewer img { width: 100%; height: 100%; object-fit: contain; animation: project-open .35s cubic-bezier(.2,.8,.2,1); }
+    .project-viewer button { position: absolute; top: 22px; right: 24px; z-index: 1; width: 48px; height: 48px; border: 1px solid rgba(255,255,255,.38); border-radius: 50%; color: #fff; background: rgba(3,5,4,.56); cursor: pointer; font-size: 1.6rem; line-height: 1; }
+    @keyframes project-open { from { opacity: 0; transform: scale(.97); } to { opacity: 1; transform: scale(1); } }
+
+    .capabilities { position: relative; overflow: hidden; isolation: isolate; background: #060908; border-block: 1px solid rgba(185,248,116,.22); color: var(--ink); }
+    .service-particles { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
+    .capabilities .container { position: relative; z-index: 1; }
+    .capabilities .section-label { color: var(--green); }
+    .capability-grid { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 72px; border-top: 1px solid rgba(185,248,116,.22); border-left: 1px solid rgba(185,248,116,.22); isolation: isolate; }
+    .capability { position: relative; z-index: 1; min-height: 250px; display: block; padding: 30px; border-right: 1px solid rgba(185,248,116,.22); border-bottom: 1px solid rgba(185,248,116,.22); background: #060908; transform-origin: var(--cap-origin-x, 50%) var(--cap-origin-y, 50%); transition: color .3s ease, background .3s ease, border-color .3s ease, box-shadow .3s ease, filter .3s ease, transform .34s cubic-bezier(.2,.8,.2,1); }
+    .capability::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(185,248,116,.11); pointer-events: none; transition: inset .34s cubic-bezier(.2,.8,.2,1), border-color .3s ease; }
+    .capability:hover { z-index: 2; color: #f8fff4; border-color: rgba(244,246,243,.74); background: #347744; box-shadow: 0 16px 30px rgba(185,248,116,.12); filter: saturate(1.12) brightness(.88); transform: translate3d(0, -3px, 0) scale(1.035); }
+    .capability:hover::before { inset: 12px; border-color: rgba(244,246,243,.4); }
+    .capability-number { color: var(--green); font-size: .7rem; font-weight: 900; letter-spacing: .1em; }
+    .capability h3 { margin: 58px 0 0; font-size: 1.36rem; letter-spacing: -.04em; }
+    .capability p { max-width: 280px; margin: 10px 0 0; color: var(--muted); font-size: .91rem; }
+    .capability:hover .capability-number, .capability:hover p { color: #d5f7bd; }
+    .capability.is-pushed { transform: translate3d(var(--push-x, 0px), var(--push-y, 0px), 0); }
+    .capability::after { content: "둘러보기"; position: absolute; right: 28px; bottom: 26px; color: var(--green); font-size: .72rem; font-weight: 900; letter-spacing: .08em; opacity: 0; transform: translateX(-8px); transition: opacity .25s ease, transform .25s ease; }
+    .capability:hover::after { opacity: 1; transform: translateX(0); }
+
+    .career { background: #0a100d; }
+    .career-layout { display: grid; grid-template-columns: .85fr 1.15fr; gap: clamp(44px, 7vw, 120px); align-items: start; }
+    .career-list { display: grid; border-top: 1px solid var(--line); }
+    .career-item { display: grid; grid-template-columns: 80px 1fr; gap: 17px; padding: 25px 0; border-bottom: 1px solid var(--line); }
+    .career-item small { color: var(--green); font-weight: 900; font-size: .68rem; letter-spacing: .1em; }
+    .career-item h3 { margin: 0; font-size: 1.14rem; }
+    .career-item p { margin: 6px 0 0; color: var(--muted); font-size: .9rem; }
+
+    .contact { padding: 160px 0 90px; text-align: center; background: #071008 url("assets/worlds/a1.jfif") center 55% / cover no-repeat; background-blend-mode: soft-light; }
+    .contact::before { content: ""; position: absolute; }
+    .contact .section-label { color: var(--green); }
+    .contact h2 { margin-inline: auto; }
+    .contact .section-intro { max-width: 820px; margin-inline: auto; color: #d0d7d0; white-space: nowrap; }
+    .contact-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 37px; }
+    .contact .button-secondary { border-color: rgba(255,255,255,.45); }
+    footer { padding: 25px 0 30px; border-top: 1px solid var(--line); background: #071008; }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; color: #98a498; font-size: .73rem; }
+
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      .studio-layout { grid-template-columns: 1fr; }
+      .career-layout { grid-template-columns: 1fr; }
+      .world-grid { grid-auto-rows: 170px; }
+      .world-card { grid-column: span 6; }
+      .world-card.wide { grid-column: span 12; }
+      .capability-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .container { width: min(calc(100% - 32px), var(--max)); }
+      .nav { min-height: 78px; }
+      .nav-cta { padding: 9px 11px; font-size: .73rem; }
+      .hero-content { padding: 90px 0 38px; }
+      h1 { font-size: clamp(3.25rem, 16vw, 5.1rem); }
+      section { padding: 90px 0; }
+      .archive-head { display: block; }
+      .archive-head .section-intro { margin-top: 21px; }
+      .world-grid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; gap: 7px; }
+      .world-card, .world-card.wide { grid-column: span 2; }
+      .world-card.tall { grid-row: span 2; }
+      .capability-grid { grid-template-columns: 1fr; margin-top: 44px; }
+      .capability { min-height: 188px; }
+      .capability h3 { margin-top: 35px; }
+      .contact { padding: 110px 0 70px; }
+      .contact .section-intro { white-space: normal; }
+      .footer-inner { flex-direction: column; }
     }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      pointer-events: none;
-      opacity: 0.22;
-      background-image:
-        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-      background-size: 42px 42px;
-      mask-image: linear-gradient(to bottom, black, transparent 88%);
-    }
-
-    img,
-    iframe {
-      display: block;
-      max-width: 100%;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    button {
-      font: inherit;
-    }
-
-    .container {
-      width: min(calc(100% - 40px), var(--max));
-      margin-inline: auto;
-    }
-
-    .topbar {
-      position: fixed;
-      inset: 0 0 auto;
-      z-index: 1000;
-      border-bottom: 1px solid transparent;
-      background: rgba(7, 9, 13, 0.68);
-      backdrop-filter: blur(18px);
-      transition: border-color .25s ease, background .25s ease;
-    }
-
-    .topbar.scrolled {
-      border-color: var(--line);
-      background: rgba(7, 9, 13, 0.9);
-    }
-
-    .nav {
-      min-height: 74px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-    }
-
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 900;
-      letter-spacing: -.03em;
-    }
-
-    .brand-symbol {
-      width: 40px;
-      height: 40px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(138, 255, 183, .35);
-      border-radius: 13px;
-      color: var(--green);
-      background: rgba(138, 255, 183, .07);
-      box-shadow: inset 0 0 24px rgba(138, 255, 183, .06);
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      list-style: none;
-      color: var(--muted);
-      font-size: .92rem;
-    }
-
-    .nav-links a {
-      transition: color .2s ease;
-    }
-
-    .nav-links a:hover {
-      color: var(--text);
-    }
-
-    .nav-contact {
-      padding: 10px 16px;
-      border: 1px solid rgba(138, 255, 183, .34);
-      border-radius: 999px;
-      color: var(--green);
-      background: rgba(138, 255, 183, .055);
-      font-weight: 800;
-    }
-
-    .menu-btn {
-      display: none;
-      width: 44px;
-      height: 44px;
-      border: 1px solid var(--line);
-      border-radius: 13px;
-      color: var(--text);
-      background: var(--panel);
-      cursor: pointer;
-    }
-
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      display: grid;
-      align-items: end;
-      padding: 124px 0 48px;
-      overflow: hidden;
-    }
-
-    .hero-media {
-      position: absolute;
-      inset: 0;
-      z-index: -2;
-      background:
-        linear-gradient(90deg, rgba(7, 9, 13, .96) 0%, rgba(7, 9, 13, .74) 46%, rgba(7, 9, 13, .24) 100%),
-        linear-gradient(0deg, var(--bg) 0%, transparent 42%),
-        url("https://i.ytimg.com/vi/tVPzYUxPLA4/hq720.jpg") center 35% / cover no-repeat;
-      transform: scale(1.02);
-    }
-
-    .hero-media::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 75% 35%, transparent 0 12%, rgba(7, 9, 13, .22) 58%),
-        linear-gradient(180deg, rgba(7,9,13,.08), rgba(7,9,13,.7));
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(320px, .55fr);
-      align-items: end;
-      gap: 64px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      color: var(--green);
-      font-size: .78rem;
-      font-weight: 900;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 34px;
-      height: 1px;
-      background: currentColor;
-    }
-
-    h1 {
-      max-width: 850px;
-      font-size: clamp(3.25rem, 7.7vw, 7.4rem);
-      line-height: .92;
-      letter-spacing: -.075em;
-      text-wrap: balance;
-    }
-
-    .hero-gradient {
-      display: block;
-      color: transparent;
-      background: linear-gradient(110deg, var(--green), var(--cyan) 58%, var(--purple));
-      background-clip: text;
-      -webkit-background-clip: text;
-    }
-
-    .hero-copy {
-      max-width: 680px;
-      margin-top: 28px;
-      color: #bbc4d1;
-      font-size: clamp(1rem, 1.45vw, 1.15rem);
-    }
-
-    .hero-copy strong {
-      color: white;
-    }
-
-    .actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 34px;
-    }
-
-    .btn {
-      min-height: 50px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      padding: 0 20px;
-      border: 1px solid var(--line-strong);
-      border-radius: 14px;
-      font-weight: 900;
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn-primary {
-      border-color: transparent;
-      color: #06100a;
-      background: var(--green);
-      box-shadow: 0 12px 32px rgba(138, 255, 183, .17);
-    }
-
-    .btn-ghost {
-      background: rgba(255,255,255,.045);
-      backdrop-filter: blur(14px);
-    }
-
-    .hero-side {
-      display: grid;
-      gap: 14px;
-    }
-
-    .profile-card {
-      padding: 22px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: rgba(11, 14, 20, .74);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
-
-    .profile-card small {
-      color: var(--muted);
-      font-size: .73rem;
-      font-weight: 800;
-      letter-spacing: .12em;
-    }
-
-    .profile-card strong {
-      display: block;
-      margin-top: 8px;
-      font-size: 1.08rem;
-    }
-
-    .profile-card p {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: .87rem;
-    }
-
-    .logo-cloud {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
-      margin-top: 34px;
-    }
-
-    .mini-logo {
-      min-width: 0;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: rgba(13, 16, 23, .78);
-      backdrop-filter: blur(14px);
-    }
-
-    .mini-logo img {
-      width: 30px;
-      height: 30px;
-      flex: 0 0 auto;
-      border-radius: 8px;
-      object-fit: cover;
-      background: white;
-    }
-
-    .mini-logo span {
-      min-width: 0;
-      overflow: hidden;
-      color: #dbe1e9;
-      font-size: .72rem;
-      font-weight: 900;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    section {
-      padding: 112px 0;
-    }
-
-    .section-head {
-      display: grid;
-      grid-template-columns: .75fr 1.25fr;
-      align-items: end;
-      gap: 56px;
-      margin-bottom: 52px;
-    }
-
-    .section-head h2,
-    .career-copy h2,
-    .contact h2 {
-      font-size: clamp(2.4rem, 5vw, 4.7rem);
-      line-height: 1.02;
-      letter-spacing: -.06em;
-      text-wrap: balance;
-    }
-
-    .section-head p,
-    .career-copy > p {
-      max-width: 680px;
-      color: var(--muted);
-    }
-
-    .showcase {
-      display: grid;
-      gap: 28px;
-    }
-
-    .project {
-      display: grid;
-      grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr);
-      min-height: 560px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
-      box-shadow: 0 18px 60px rgba(0,0,0,.22);
-      overflow: hidden;
-    }
-
-    .project.reverse {
-      grid-template-columns: minmax(320px, .82fr) minmax(0, 1.18fr);
-    }
-
-    .project.reverse .media-box {
-      order: 2;
-    }
-
-    .project.reverse .project-info {
-      order: 1;
-    }
-
-    .media-box {
-      position: relative;
-      min-height: 420px;
-      padding: 18px;
-      background:
-        radial-gradient(circle at 12% 10%, rgba(105,215,255,.13), transparent 36%),
-        #0a0d13;
-      overflow: hidden;
-    }
-
-    .media-box.youtube {
-      background:
-        linear-gradient(180deg, rgba(5,7,10,.04), rgba(5,7,10,.52)),
-        url("https://i.ytimg.com/vi/tVPzYUxPLA4/maxresdefault.jpg") center / cover;
-    }
-
-    .media-box.trident {
-      display: grid;
-      place-items: center;
-      background:
-        radial-gradient(circle at 50% 42%, rgba(105,215,255,.25), transparent 25%),
-        radial-gradient(circle at 50% 60%, rgba(138,255,183,.12), transparent 37%),
-        linear-gradient(145deg, #07131b, #080b11 70%);
-    }
-
-    .media-frame {
-      width: 100%;
-      height: 100%;
-      min-height: 500px;
-      border: 0;
-      border-radius: 19px;
-      background: #090b10;
-      overflow: hidden;
-    }
-
-    .aspect-video {
-      aspect-ratio: 16 / 9;
-      min-height: 0;
-    }
-
-    .youtube-launcher {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      min-height: 500px;
-      display: block;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 19px;
-      background-color: #080a0e;
-      background-position: center;
-      background-size: cover;
-      overflow: hidden;
-      isolation: isolate;
-    }
-
-    .youtube-launcher::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: -1;
-      background:
-        linear-gradient(180deg, rgba(5,7,10,.06), rgba(5,7,10,.78)),
-        linear-gradient(90deg, rgba(5,7,10,.28), transparent 62%);
-      transition: background .25s ease;
-    }
-
-    .youtube-launcher:hover::before {
-      background:
-        linear-gradient(180deg, rgba(5,7,10,.02), rgba(5,7,10,.65)),
-        linear-gradient(90deg, rgba(5,7,10,.18), transparent 62%);
-    }
-
-    .youtube-play {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 82px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border-radius: 18px;
-      color: white;
-      background: #ff0033;
-      box-shadow: 0 18px 46px rgba(0,0,0,.44);
-      transform: translate(-50%, -50%);
-      transition: transform .22s ease, box-shadow .22s ease;
-    }
-
-    .youtube-play::after {
-      content: "";
-      width: 0;
-      height: 0;
-      margin-left: 5px;
-      border-top: 10px solid transparent;
-      border-bottom: 10px solid transparent;
-      border-left: 16px solid white;
-    }
-
-    .youtube-launcher:hover .youtube-play {
-      transform: translate(-50%, -50%) scale(1.08);
-      box-shadow: 0 22px 55px rgba(0,0,0,.55);
-    }
-
-    .youtube-caption {
-      position: absolute;
-      left: 22px;
-      right: 22px;
-      bottom: 20px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .youtube-caption strong {
-      display: block;
-      font-size: 1.02rem;
-    }
-
-    .youtube-caption span {
-      color: #c6cfda;
-      font-size: .76rem;
-      font-weight: 800;
-    }
-
-    .youtube-open-label {
-      flex: 0 0 auto;
-      padding: 8px 11px;
-      border: 1px solid rgba(255,255,255,.18);
-      border-radius: 999px;
-      color: white !important;
-      background: rgba(0,0,0,.36);
-      backdrop-filter: blur(12px);
-    }
-
-    .twitter-shell {
-      height: 100%;
-      min-height: 500px;
-      display: grid;
-      place-items: center;
-      padding: 18px;
-      border-radius: 19px;
-      background: #05070a;
-      overflow: auto;
-    }
-
-    .twitter-shell .twitter-tweet {
-      width: min(100%, 520px);
-      margin: auto !important;
-      padding: 24px;
-      border: 1px solid #2f3336;
-      border-radius: 18px;
-      color: #e7e9ea;
-      background: #000;
-      text-align: center;
-    }
-
-    .twitter-shell .twitter-tweet p {
-      margin-bottom: 14px;
-      color: #8b98a5;
-    }
-
-    .twitter-shell .twitter-tweet a {
-      color: #1d9bf0;
-      font-weight: 800;
-    }
-
-    .tweet-fallback {
-      width: min(100%, 520px);
-      padding: 24px;
-      border: 1px solid #2f3336;
-      border-radius: 18px;
-      color: #e7e9ea;
-      background: #000;
-      text-align: center;
-    }
-
-    .tweet-fallback p {
-      margin: 10px 0 18px;
-      color: #8b98a5;
-    }
-
-    .project-info {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: clamp(30px, 5vw, 64px);
-    }
-
-    .project-logo {
-      min-height: 60px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 34px;
-    }
-
-    .project-logo img,
-    .logo-fallback {
-      width: 54px;
-      height: 54px;
-      flex: 0 0 auto;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      object-fit: cover;
-      background: white;
-      box-shadow: 0 12px 30px rgba(0,0,0,.25);
-    }
-
-    .logo-fallback {
-      display: grid;
-      place-items: center;
-      color: #071009;
-      background: var(--green);
-      font-size: .84rem;
-      font-weight: 1000;
-      letter-spacing: -.03em;
-    }
-
-    .project-logo-text {
-      min-width: 0;
-    }
-
-    .project-logo-text small {
-      display: block;
-      color: var(--muted);
-      font-size: .7rem;
-      font-weight: 900;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-    }
-
-    .project-logo-text strong {
-      display: block;
-      margin-top: 2px;
-      font-size: 1.05rem;
-    }
-
-    .project-no {
-      color: var(--green);
-      font-size: .78rem;
-      font-weight: 900;
-      letter-spacing: .16em;
-    }
-
-    .project h3 {
-      margin-top: 12px;
-      font-size: clamp(2rem, 3.8vw, 3.5rem);
-      line-height: 1.04;
-      letter-spacing: -.055em;
-    }
-
-    .project-info > p {
-      margin-top: 20px;
-      color: var(--muted);
-    }
-
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 24px;
-    }
-
-    .tag {
-      padding: 7px 10px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      color: #c7cfda;
-      background: rgba(255,255,255,.025);
-      font-size: .75rem;
-      font-weight: 800;
-    }
-
-    .source-link {
-      width: fit-content;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 30px;
-      color: var(--green);
-      font-size: .89rem;
-      font-weight: 900;
-    }
-
-    .project-links {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 10px 16px;
-      margin-top: 30px;
-    }
-
-    .project-links .source-link {
-      margin-top: 0;
-    }
-
-    .trident-site-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: 34px;
-      padding: 0 11px;
-      border: 1px solid rgba(105,215,255,.4);
-      border-radius: 10px;
-      color: var(--cyan);
-      background: rgba(105,215,255,.07);
-      font-size: .76rem;
-      font-weight: 900;
-      transition: transform .2s ease, background .2s ease;
-    }
-
-    .trident-site-link:hover {
-      background: rgba(105,215,255,.16);
-      transform: translateY(-2px);
-    }
-
-    .external-links {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      width: min(100%, 340px);
-      margin-top: 24px;
-      padding: 13px;
-      border: 1px solid rgba(105,215,255,.17);
-      border-radius: 18px;
-      background:
-        linear-gradient(135deg, rgba(105,215,255,.07), rgba(138,255,183,.035)),
-        rgba(255,255,255,.018);
-    }
-
-    .external-links-title {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      color: var(--cyan);
-      font-size: .72rem;
-      font-weight: 1000;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-    }
-
-    .video-platform-logo {
-      width: 25px;
-      height: 25px;
-      display: grid;
-      place-items: center;
-      object-fit: contain;
-    }
-
-    .external-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: space-between;
-      min-height: 38px;
-      padding: 0 10px;
-      border: 1px solid var(--line-strong);
-      border-radius: 11px;
-      color: #dbe5f0;
-      background: rgba(255,255,255,.04);
-      font-size: .78rem;
-      font-weight: 900;
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .external-link::after {
-      content: "↗";
-      color: var(--cyan);
-      font-size: .92rem;
-    }
-
-    .external-link:hover {
-      border-color: rgba(138,255,183,.52);
-      background: rgba(138,255,183,.09);
-      transform: translateY(-2px);
-    }
-
-    .brand-pair {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .brand-pair img {
-      width: 46px;
-      height: 46px;
-    }
-
-    .brand-pair b {
-      color: var(--muted);
-      font-size: 1.2rem;
-    }
-
-    .trident-mark {
-      width: min(75%, 440px);
-      filter: drop-shadow(0 24px 60px rgba(105,215,255,.22));
-    }
-
-    .trident-title {
-      position: absolute;
-      left: 30px;
-      right: 30px;
-      bottom: 28px;
-      text-align: center;
-    }
-
-    .trident-title strong {
-      display: block;
-      font-size: clamp(2.2rem, 7vw, 5.3rem);
-      line-height: 1;
-      letter-spacing: .14em;
-    }
-
-    .trident-title span {
-      color: var(--muted);
-      font-size: .72rem;
-      font-weight: 900;
-      letter-spacing: .24em;
-    }
-
-    .career {
-      display: grid;
-      grid-template-columns: .9fr 1.1fr;
-      align-items: start;
-      gap: 70px;
-    }
-
-    .career-copy {
-      position: sticky;
-      top: 112px;
-    }
-
-    .career-copy h2 {
-      margin-bottom: 22px;
-    }
-
-    .timeline {
-      position: relative;
-      display: grid;
-      gap: 16px;
-    }
-
-    .timeline::before {
-      content: "";
-      position: absolute;
-      left: 30px;
-      top: 38px;
-      bottom: 38px;
-      width: 1px;
-      background: linear-gradient(to bottom, transparent, var(--green) 7%, var(--green) 93%, transparent);
-      box-shadow: 0 0 12px rgba(138,255,183,.2);
-    }
-
-    .timeline-item {
-      position: relative;
-      padding: 25px 26px 25px 58px;
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      background: rgba(255,255,255,.022);
-    }
-
-    .timeline-item::before {
-      content: "";
-      position: absolute;
-      left: 25px;
-      top: 31px;
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: var(--green);
-      box-shadow: 0 0 0 6px rgba(138,255,183,.08);
-    }
-
-    .timeline-item small {
-      color: var(--green);
-      font-size: .7rem;
-      font-weight: 900;
-      letter-spacing: .13em;
-    }
-
-    .timeline-item h3 {
-      margin-top: 5px;
-      font-size: 1.08rem;
-    }
-
-    .timeline-item p {
-      margin-top: 7px;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    .capabilities {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-    }
-
-    .capability {
-      min-height: 250px;
-      padding: 28px;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: linear-gradient(145deg, rgba(255,255,255,.04), rgba(255,255,255,.012));
-      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
-    }
-
-    .capability:hover {
-      border-color: rgba(138,255,183,.5);
-      box-shadow: 0 16px 34px rgba(0,0,0,.16);
-      transform: translateY(-6px);
-    }
-
-    .capability-icon {
-      width: 48px;
-      height: 48px;
-      display: grid;
-      place-items: center;
-      margin-bottom: 28px;
-      border: 1px solid rgba(138,255,183,.24);
-      border-radius: 14px;
-      color: var(--green);
-      background: rgba(138,255,183,.055);
-      font-size: .92rem;
-      font-weight: 1000;
-    }
-
-    .capability h3 {
-      font-size: 1.16rem;
-    }
-
-    .capability p {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    .contact {
-      position: relative;
-      padding: clamp(44px, 7vw, 84px);
-      border: 1px solid var(--line);
-      border-radius: 34px;
-      background:
-        radial-gradient(circle at 10% 10%, rgba(138,255,183,.11), transparent 31%),
-        radial-gradient(circle at 90% 95%, rgba(105,215,255,.13), transparent 30%),
-        var(--panel);
-      overflow: hidden;
-    }
-
-    .contact p {
-      max-width: none;
-      margin-top: 24px;
-      color: var(--muted);
-    }
-
-    .contact-note {
-      margin-top: 15px;
-      color: #707b8a;
-      font-size: .78rem;
-    }
-
-    .contact-channels {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 28px;
-    }
-
-    .contact-channel {
-      width: 54px;
-      height: 54px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px;
-      border: 1px solid var(--line-strong);
-      border-radius: 15px;
-      color: var(--text);
-      background: var(--panel-soft);
-      transition: transform .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .contact-channel:hover {
-      transform: translateY(-3px);
-    }
-
-    .contact-channel-icon {
-      width: 100%;
-      height: 100%;
-      display: grid;
-      place-items: center;
-      border-radius: 11px;
-      font-size: 1.25rem;
-      font-weight: 1000;
-    }
-
-    .contact-channel-copy,
-    .contact-channel-arrow {
-      display: none;
-    }
-
-    .discord-channel {
-      border-color: #5865f2;
-      color: #fff;
-      background: #5865f2;
-      box-shadow: 0 14px 32px rgba(88,101,242,.24);
-    }
-
-    .discord-channel:hover {
-      border-color: #4752c4;
-      background: #4752c4;
-    }
-
-    .discord-channel .contact-channel-icon {
-      background: transparent;
-    }
-
-    .discord-logo {
-      width: 27px;
-      height: 27px;
-      display: block;
-    }
-
-    .email-channel {
-      border-color: rgba(138,255,183,.36);
-    }
-
-    .email-channel:hover {
-      border-color: var(--green);
-      background: rgba(138,255,183,.09);
-    }
-
-    .email-channel .contact-channel-icon {
-      color: #06100a;
-      background: var(--green);
-    }
-
-    .x-channel {
-      border-color: #20252b;
-      background: #111418;
-    }
-
-    .x-channel:hover {
-      border-color: #4c5661;
-      background: #20252b;
-    }
-
-    .x-channel .contact-channel-icon {
-      color: #fff;
-    }
-
-    @media (max-width: 1020px) {
-      .timeline::before {
-        display: none;
-      }
-    }
-
-    footer {
-      padding: 30px 0 38px;
-      color: #6f7a89;
-      font-size: .84rem;
-    }
-
-    .footer-inner {
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      padding-top: 26px;
-      border-top: 1px solid var(--line);
-    }
-
-    .reveal {
-      opacity: 0;
-      transform: translateY(24px);
-      transition: opacity .65s ease, transform .65s ease;
-    }
-
-    .reveal.visible {
-      opacity: 1;
-      transform: none;
-    }
-
-    @media (max-width: 1020px) {
-      .hero-grid,
-      .section-head,
-      .career {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        min-height: auto;
-        padding-top: 150px;
-      }
-
-      .hero-side {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .logo-cloud {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .project,
-      .project.reverse {
-        grid-template-columns: 1fr;
-      }
-
-      .project.reverse .media-box,
-      .project.reverse .project-info {
-        order: initial;
-      }
-
-      .media-box {
-        min-height: 500px;
-      }
-
-      .career-copy {
-        position: static;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .container {
-        width: min(calc(100% - 28px), var(--max));
-      }
-
-      .menu-btn {
-        display: grid;
-        place-items: center;
-      }
-
-      .nav-links {
-        position: absolute;
-        top: 74px;
-        left: 14px;
-        right: 14px;
-        display: none;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 6px;
-        padding: 14px;
-        border: 1px solid var(--line);
-        border-radius: 18px;
-        background: rgba(10, 13, 18, .98);
-        box-shadow: var(--shadow);
-      }
-
-      .nav-links.open {
-        display: flex;
-      }
-
-      .nav-links a {
-        display: block;
-        padding: 12px 13px;
-        border-radius: 12px;
-      }
-
-      .nav-contact {
-        text-align: center;
-      }
-
-      h1 {
-        font-size: clamp(3.3rem, 16vw, 5.2rem);
-      }
-
-      .hero-media {
-        background:
-          linear-gradient(180deg, rgba(7,9,13,.38), rgba(7,9,13,.95) 70%),
-          url("https://i.ytimg.com/vi/tVPzYUxPLA4/hq720.jpg") 61% center / cover no-repeat;
-        opacity: .72;
-      }
-
-      .hero-side {
-        grid-template-columns: 1fr;
-      }
-
-      .logo-cloud {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      section {
-        padding: 82px 0;
-      }
-
-      .project {
-        min-height: auto;
-      }
-
-      .media-box {
-        min-height: 360px;
-        padding: 10px;
-      }
-
-      .media-frame,
-      .twitter-shell,
-      .youtube-launcher {
-        min-height: 340px;
-      }
-
-      .project-info {
-        padding: 32px 24px 38px;
-      }
-
-      .capabilities {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-inner {
-        flex-direction: column;
-      }
-    }
-
     @media (prefers-reduced-motion: reduce) {
-      html {
-        scroll-behavior: auto;
-      }
-
-      .reveal {
-        opacity: 1;
-        transform: none;
-        transition: none;
-      }
-
-      .btn,
-      .capability {
-        transition: none;
-      }
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
-  
-    .youtube-launcher {
-      appearance: none;
-      -webkit-appearance: none;
-      padding: 0;
-      color: inherit;
-      font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .youtube-inline-frame {
-      width: 100%;
-      height: 100%;
-      min-height: 500px;
-      border: 0;
-      border-radius: 19px;
-      background: #000;
-    }
-
-    @media (max-width: 760px) {
-      .youtube-inline-frame {
-        min-height: 340px;
-      }
-    }
-
-    :root {
-      --bg: #f7f9fc;
-      --panel: #ffffff;
-      --panel-soft: #eef3f7;
-      --line: #b9c6d3;
-      --line-strong: #98aabb;
-      --text: #17212b;
-      --muted: #5d6b79;
-      --green: #087a4b;
-      --cyan: #087ca7;
-      --yellow: #a56a00;
-      --pink: #bc3167;
-      --purple: #7148b7;
-      --radius: 16px;
-      --shadow: 0 14px 40px rgba(37, 54, 72, .1);
-      --topbar: rgba(255, 255, 255, .9);
-      --media-bg: #e8eef3;
-      --button-text: #ffffff;
-    }
-
-    :root[data-theme="dark"] {
-      --bg: #0b0d10;
-      --panel: #12151a;
-      --panel-soft: #171b21;
-      --line: #262b33;
-      --line-strong: #353b45;
-      --text: #f2f4f7;
-      --muted: #9aa3af;
-      --green: #a7f3d0;
-      --cyan: #a7f3d0;
-      --yellow: #f3d58a;
-      --pink: #d8b4fe;
-      --purple: #c4b5fd;
-      --shadow: none;
-      --topbar: rgba(11, 13, 16, .94);
-      --media-bg: #0d1014;
-      --button-text: #0b0d10;
-    }
-
-    :root:not([data-theme="dark"]) .external-links {
-      border-color: #a8d5e2;
-      background: linear-gradient(135deg, #ecfaff, #f5fcf9);
-    }
-
-    :root:not([data-theme="dark"]) .external-link {
-      border-color: #a9cbd5;
-      color: #173947;
-      background: #ffffff;
-    }
-
-    :root:not([data-theme="dark"]) .external-link:hover {
-      border-color: #087ca7;
-      background: #e3f6fb;
-    }
-
-    body {
-      background:
-        radial-gradient(circle at 4% 14%, rgba(8, 124, 167, .11), transparent 28rem),
-        radial-gradient(circle at 96% 32%, rgba(8, 122, 75, .09), transparent 32rem),
-        radial-gradient(circle at 50% 100%, rgba(113, 72, 183, .06), transparent 36rem),
-        var(--bg);
-    }
-
-    :root[data-theme="dark"] body {
-      background: var(--bg);
-    }
-
-    body::before {
-      display: none;
-    }
-
-    .topbar {
-      background: var(--topbar);
-      backdrop-filter: blur(10px);
-    }
-
-    .topbar.scrolled {
-      background: var(--topbar);
-    }
-
-    .theme-toggle {
-      min-width: 44px;
-      height: 40px;
-      display: inline-grid;
-      place-items: center;
-      padding: 0 12px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--text);
-      background: var(--panel);
-      cursor: pointer;
-      transition: color .2s ease, border-color .2s ease, background .2s ease;
-    }
-
-    .theme-toggle:hover {
-      border-color: var(--green);
-      color: var(--green);
-    }
-
-    .brand-symbol {
-      border-radius: 8px;
-      box-shadow: none;
-      background: transparent;
-    }
-
-    .nav-contact,
-    .btn,
-    .tag,
-    .youtube-open-label {
-      border-radius: 8px;
-    }
-
-    .hero {
-      min-height: 760px;
-      padding-top: 140px;
-      align-items: center;
-    }
-
-    .hero-media {
-      opacity: 0.3;
-      filter: grayscale(15%);
-    }
-
-    .hero-media::after {
-      background: linear-gradient(90deg, var(--bg) 0%, rgba(11,13,16,.88) 45%, rgba(11,13,16,.38) 100%);
-    }
-
-    .hero-grid {
-      grid-template-columns: minmax(0, 1fr) 260px;
-      gap: 48px;
-    }
-
-    h1 {
-      max-width: 980px;
-      font-size: clamp(3rem, 5vw, 5rem);
-      line-height: .96;
-    }
-
-    .hero-gradient {
-      color: var(--green);
-      background: none;
-      -webkit-text-fill-color: initial;
-    }
-
-    .hero-copy {
-      max-width: 560px;
-      color: var(--muted);
-      font-size: 1rem;
-    }
-
-    .profile-card,
-    .mini-logo,
-    .project,
-    .timeline-item,
-    .capability,
-    .contact {
-      box-shadow: none;
-      background: var(--panel);
-      border-color: var(--line);
-    }
-
-    .profile-card {
-      padding: 18px;
-      border-radius: 12px;
-      backdrop-filter: none;
-    }
-
-    .profile-card small {
-      color: var(--muted);
-      letter-spacing: 0;
-      text-transform: none;
-    }
-
-    .profile-card strong {
-      font-size: .98rem;
-      margin-top: 4px;
-    }
-
-    .logo-cloud {
-      margin-top: 28px;
-    }
-
-    .mini-logo {
-      height: 54px;
-      border-radius: 10px;
-    }
-
-    section {
-      padding: 88px 0;
-    }
-
-    .section-head {
-      grid-template-columns: 1fr;
-      gap: 14px;
-      margin-bottom: 34px;
-    }
-
-    .section-head h2,
-    .career-copy h2,
-    .contact h2 {
-      font-size: clamp(2rem, 4.5vw, 3.8rem);
-      letter-spacing: -.045em;
-    }
-
-    .eyebrow {
-      margin-bottom: 12px;
-      letter-spacing: .08em;
-      text-transform: none;
-    }
-
-    .eyebrow::before {
-      display: none;
-    }
-
-    .showcase {
-      gap: 20px;
-    }
-
-    .project,
-    .project.reverse {
-      min-height: 460px;
-      border-radius: 16px;
-      grid-template-columns: 1.05fr .95fr;
-    }
-
-    .project.reverse .media-box {
-      order: initial;
-    }
-
-    .project.reverse .project-info {
-      order: initial;
-    }
-
-    .media-box {
-      min-height: 420px;
-      padding: 10px;
-      background: var(--media-bg);
-    }
-
-    .youtube-launcher,
-    .media-frame,
-    .twitter-shell,
-    .youtube-inline-frame {
-      border-radius: 10px;
-    }
-
-    .youtube-play {
-      width: 70px;
-      height: 50px;
-      border-radius: 12px;
-    }
-
-    .youtube-caption {
-      left: 16px;
-      right: 16px;
-      bottom: 14px;
-    }
-
-    .youtube-open-label {
-      background: rgba(0,0,0,.55);
-    }
-
-    .project-info {
-      padding: 36px;
-    }
-
-    .project-logo {
-      margin-bottom: 24px;
-    }
-
-    .project-logo img,
-    .logo-fallback {
-      width: 46px;
-      height: 46px;
-      border-radius: 10px;
-    }
-
-    .project h3 {
-      font-size: clamp(1.8rem, 3vw, 2.7rem);
-    }
-
-    .project-info > p {
-      margin-top: 14px;
-    }
-
-    .tags {
-      margin-top: 18px;
-    }
-
-    .source-link {
-      margin-top: 22px;
-    }
-
-    .career {
-      grid-template-columns: .8fr 1.2fr;
-      gap: 44px;
-    }
-
-    .timeline-item {
-      padding: 20px 22px;
-      border-radius: 12px;
-    }
-
-    .timeline-item::before {
-      display: none;
-    }
-
-    .capabilities {
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .capability {
-      min-height: 170px;
-      padding: 20px;
-      border-radius: 12px;
-    }
-
-    .capability-icon {
-      width: 40px;
-      height: 40px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-      background: transparent;
-    }
-
-    .contact {
-      padding: 48px;
-      border-radius: 16px;
-      background: var(--panel);
-    }
-
-    .btn-primary {
-      color: var(--button-text);
-      background: var(--green);
-      box-shadow: none;
-    }
-
-    .btn-ghost {
-      background: transparent;
-      backdrop-filter: none;
-    }
-
-    @media (max-width: 1020px) {
-      .hero-grid,
-      .career,
-      .project,
-      .project.reverse {
-        grid-template-columns: 1fr;
-      }
-
-      .hero-side {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .project.reverse .media-box,
-      .project.reverse .project-info {
-        order: initial;
-      }
-    }
-
-    @media (max-width: 760px) {
-      .hero {
-        min-height: auto;
-        padding-top: 120px;
-      }
-
-      .hero-side,
-      .capabilities {
-        grid-template-columns: 1fr;
-      }
-
-      .logo-cloud {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .project-info {
-        padding: 26px 20px 30px;
-      }
-
-      .media-box,
-      .youtube-launcher,
-      .media-frame,
-      .twitter-shell,
-      .youtube-inline-frame {
-        min-height: 320px;
-      }
-
-      .contact {
-        padding: 34px 22px;
-      }
-    }
-
-    .hero {
-      background: var(--bg);
-    }
-
-    .hero-media {
-      display: none !important;
-      background: none !important;
-    }
-
-    .hero::before,
-    .hero::after {
-      display: none !important;
-    }
-
-    /* 밝은 테마에서는 다크 테마용 고정 흰색 값을 테마 색상으로 교체합니다. */
-    :root:not([data-theme="dark"]) .hero-copy strong,
-    :root:not([data-theme="dark"]) .mini-logo span,
-    :root:not([data-theme="dark"]) .tag {
-      color: var(--text);
-    }
-
-    :root:not([data-theme="dark"]) .btn-ghost,
-    :root:not([data-theme="dark"]) .project,
-    :root:not([data-theme="dark"]) .timeline-item,
-    :root:not([data-theme="dark"]) .capability {
-      background: var(--panel);
-    }
-
-    :root:not([data-theme="dark"]) .btn-ghost:hover {
-      background: var(--panel-soft);
-    }
-
-    :root:not([data-theme="dark"]) .nav-contact {
-      border-color: #087a4b;
-      color: #075a38;
-      background: #e3f7ec;
-    }
-
-    :root:not([data-theme="dark"]) .capability-icon {
-      border-color: #9ed9ba;
-      color: #075a38;
-      background: #e4f8ee;
-    }
-
-    :root:not([data-theme="dark"]) .timeline::before {
-      background: linear-gradient(to bottom, transparent, var(--green) 7%, var(--green) 93%, transparent);
-      box-shadow: 0 0 12px rgba(8,122,75,.16);
-    }
-
-    section#contact {
-      padding: 28px 0 0;
-    }
-
-    .contact {
-      padding: 42px 0 50px;
-      border: 0;
-      border-top: 1px solid var(--line);
-      border-bottom: 1px solid var(--line);
-      border-radius: 0;
-      background: transparent;
-      text-align: center;
-    }
-
-    .contact > p:not(.eyebrow) {
-      max-width: 760px;
-      margin: 20px auto 0;
-    }
-
-    .contact-channels {
-      justify-content: center;
-      margin-top: 30px;
-    }
-
-    .contact-channel {
-      width: 62px;
-      height: 62px;
-      border-radius: 18px;
-      box-shadow: 0 10px 22px rgba(20,32,44,.12);
-    }
-
-    .contact-channel-icon {
-      border-radius: 14px;
-    }
-
-    .email-channel {
-      padding: 0;
-      border-color: #9be0b7;
-      background: #bdf0d0;
-    }
-
-    .email-channel:hover {
-      border-color: #7bd3a0;
-      background: #aae8c2;
-      box-shadow: 0 14px 28px rgba(8,122,75,.2);
-    }
-
-    .email-channel .contact-channel-icon {
-      color: #075a38;
-      background: transparent;
-    }
-
-    .x-channel:hover,
-    .discord-channel:hover {
-      box-shadow: 0 14px 30px rgba(20,32,44,.24);
-    }
-
-    .footer-inner {
-      border-top: 0;
-    }
-
-    .hero-intro {
-      will-change: opacity, transform;
-      transition: opacity .7s cubic-bezier(.22, 1, .36, 1), transform .7s cubic-bezier(.22, 1, .36, 1);
-    }
-
-    body:not(.site-ready) .hero-intro {
-      opacity: 0;
-      transform: translateY(-54px);
-    }
-
-    body.site-ready .hero-intro {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .hero-side-intro {
-      will-change: opacity, transform;
-      transition: opacity .7s .14s cubic-bezier(.22, 1, .36, 1), transform .7s .14s cubic-bezier(.22, 1, .36, 1);
-    }
-
-    body:not(.site-ready) .hero-side-intro {
-      opacity: 0;
-      transform: translateX(54px);
-    }
-
-    body.site-ready .hero-side-intro {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .site-loader {
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      display: grid;
-      place-items: center;
-      color: var(--text);
-      background: var(--bg);
-      transition: opacity .45s ease, visibility .45s ease;
-    }
-
-    .site-loader.is-hidden {
-      visibility: hidden;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .loader-content {
-      display: grid;
-      justify-items: center;
-      gap: 18px;
-    }
-
-    .loader-symbol {
-      width: 58px;
-      height: 58px;
-      display: grid;
-      place-items: center;
-      border: 1px solid rgba(138,255,183,.55);
-      border-radius: 18px;
-      color: var(--green);
-      background: rgba(138,255,183,.08);
-      box-shadow: 0 0 0 8px rgba(138,255,183,.04);
-      font-size: 1.45rem;
-      font-weight: 1000;
-    }
-
-    .loader-title {
-      font-size: .93rem;
-      font-weight: 1000;
-      letter-spacing: .08em;
-    }
-
-    .loader-track {
-      width: 148px;
-      height: 3px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: var(--line);
-    }
-
-    .loader-progress {
-      width: 58%;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--green), var(--cyan));
-      animation: loader-progress 1s ease-in-out infinite;
-    }
-
-    @keyframes loader-progress {
-      from { transform: translateX(-115%); }
-      to { transform: translateX(180%); }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .site-loader {
-        transition: none;
-      }
-
-      .loader-progress {
-        animation: none;
-        transform: translateX(35%);
-      }
-
-      .hero-intro {
-        transition: none;
-      }
-
-      .hero-side-intro {
-        transition: none;
-      }
-
-      body:not(.site-ready) .hero-intro,
-      body:not(.site-ready) .hero-side-intro {
-        opacity: 1;
-        transform: none;
-      }
-    }
-</style>
+  </style>
 </head>
 <body>
-<div aria-live="polite" class="site-loader" id="siteLoader" role="status">
-<div class="loader-content">
-<div aria-hidden="true" class="loader-symbol">C</div>
-<p class="loader-title">CHOROK STUDIO</p>
-<div aria-hidden="true" class="loader-track"><div class="loader-progress"></div></div>
-</div>
-</div>
-<header class="topbar" id="topbar">
-<nav aria-label="주요 메뉴" class="container nav">
-<a aria-label="홈으로 이동" class="brand" href="#top">
-<span class="brand-symbol">S</span>
-<span>CHOROK Studio</span>
-</a>
-<button aria-controls="navLinks" aria-expanded="false" aria-label="메뉴 열기" class="menu-btn" id="menuBtn" type="button">☰</button>
-<ul class="nav-links" id="navLinks">
-<li><a href="#works">프로젝트</a></li>
-<li><a href="#career">경력</a></li>
-<li><a href="#skills">역량</a></li>
-<li><a class="nav-contact" href="#contact">협업 문의</a></li>
-</ul>
-<button aria-label="어두운 테마로 전환" class="theme-toggle" id="themeToggle" title="어두운 테마로 전환" type="button">☾</button>
-</nav>
-</header>
-<main id="top">
-<section class="hero">
+  <div class="loader" id="loader" role="status" aria-live="polite">
+    <div class="loader-mark"><div class="loader-sign"><img src="assets/chorok-studio-logo.png" alt="초록스튜디오 로고"></div><strong>CHOROK STUDIO</strong><div class="loader-line"></div></div>
+  </div>
 
-<div class="container">
-<div class="hero-grid">
-<div class="reveal hero-intro">
-<p class="eyebrow">Minecraft Server Developer</p>
-<h1>마인크래프트 콘텐츠를 <span class="hero-gradient">직접 만듭니다.</span></h1>
-<p class="hero-copy">서버 시스템 개발을 중심으로 <strong>UI와 모델링</strong>까지 함께 작업합니다.</p>
-<div class="actions">
-<a class="btn btn-primary" href="#works">프로젝트</a>
-<a class="btn btn-ghost" href="#career">경력</a>
-</div>
-<div aria-label="참여 프로젝트" class="logo-cloud">
-<div class="mini-logo">
-<img alt="네이버 로고" onerror="this.style.display='none'" src="https://www.google.com/s2/favicons?domain=naver.com&amp;sz=128"/>
-<span>마·초·고</span>
-</div>
-<div class="mini-logo">
-<img alt="오버더월 로고" onerror="this.style.display='none'" src="https://unavatar.io/youtube/%40OVERTHEWALL_Official"/>
-<span>OVER THE WALL</span>
-</div>
-<div class="mini-logo">
-<img alt="좀비 서버 영상 계정 로고" onerror="this.style.display='none'" src="https://unavatar.io/x/redictw"/>
-<span>14DAYS ZOMBIE SERVER</span>
-</div>
-<div class="mini-logo">
-<img alt="나루 로고" onerror="this.style.display='none'" src="https://unavatar.io/x/Naru_0417_"/>
-<span>나루의 한탕</span>
-</div>
-<div class="mini-logo">
-<img alt="트라이던트 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot; style=&quot;width:30px;height:30px;border-radius:8px;&quot;&gt;T&lt;/span&gt;'" src="trident.png"/>
-<span>TRIDENT</span>
-</div>
-</div>
-</div>
-<aside aria-label="포트폴리오 핵심 정보" class="hero-side reveal hero-side-intro">
-<div class="profile-card">
-<small>개발</small>
-<strong>서버 시스템과 게임 로직</strong>
-</div>
-<div class="profile-card">
-<small>디자인</small>
-<strong>UI 구성과 모델링</strong>
-</div>
-<div class="profile-card">
-<small>작업 경험</small>
-<strong>프로젝트, 공모전, 외주</strong>
-</div>
-</aside>
-</div>
-</div>
-</section>
-<section id="works">
-<div class="container">
-<div class="section-head reveal">
-<div>
-<p class="eyebrow">Projects</p>
-<h2>작업한 프로젝트</h2>
-</div>
-</div>
-<div class="showcase">
-<!-- 마초고 -->
-<article class="project reveal">
-<div class="media-box">
-<iframe allow="autoplay; encrypted-media; fullscreen" allowfullscreen="" class="media-frame" loading="lazy" src="https://tv.naver.com/embed/1692622" title="네이버 × 샌드박스 에듀케이션 마초고 프로젝트 영상">
-</iframe>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<div class="brand-pair">
-<img alt="네이버 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;N&lt;/span&gt;'" src="https://www.google.com/s2/favicons?domain=naver.com&amp;sz=128"/>
-<b>×</b>
-<img alt="샌드박스 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;SB&lt;/span&gt;'" src="https://www.google.com/s2/favicons?domain=sandbox.co.kr&amp;sz=128"/>
-</div>
-<div class="project-logo-text">
-<small>Education Project</small>
-<strong>NAVER × SANDBOX</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 01</span>
-<h3>마·초·고 프로젝트</h3>
-<p>네이버 × 샌드박스 에듀케이션 교육 프로젝트에 참여했습니다.</p>
-<div class="tags">
-<span class="tag">기업 협업</span>
-<span class="tag">교육 콘텐츠</span>
-<span class="tag">Minecraft</span>
-</div>
-<a class="source-link" href="https://naver.me/FXnqiQUf" rel="noopener noreferrer" target="_blank">영상 보기 ↗</a>
-</div>
-</article>
-<!-- 여시재 미래도시 공모전 -->
-<article class="project reverse reveal">
-<div class="media-box youtube">
-<button aria-label="여시재 미래도시 공모전 영상을 현재 화면에서 재생" class="youtube-launcher" data-youtube-id="6X_ZM3HRnFo" style="background-image:url('https://i.ytimg.com/vi/6X_ZM3HRnFo/hq720.jpg'),url('https://i.ytimg.com/vi/6X_ZM3HRnFo/hqdefault.jpg');" type="button"><span aria-hidden="true" class="youtube-play"></span><span class="youtube-caption"><span><strong>마인크래프트 미래도시 공모전</strong>
-                    여시재 우수상 수상작 영상</span><span class="youtube-open-label">여기서 재생 ▶</span></span></button>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<img alt="여시재 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;Y&lt;/span&gt;'" src="logo.png"/>
-<div class="project-logo-text">
-<small>Award Winning Project</small>
-<strong>YEOSIJAE FUTURE CITY</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 02</span>
-<h3>여시재 미래도시 공모전</h3>
-<p>마인크래프트 미래도시 공모전에서 우수상을 받았습니다.</p>
-<div class="tags">
-<span class="tag">우수상</span>
-<span class="tag">미래도시</span>
-<span class="tag">공모전</span>
-<span class="tag">Minecraft</span>
-</div>
-<a class="source-link" href="https://www.youtube.com/watch?v=6X_ZM3HRnFo" rel="noopener noreferrer" target="_blank">수상작 영상 ↗</a>
-</div>
-</article>
-<!-- Trident -->
-<article class="project reveal">
-<div class="media-box youtube">
-<button aria-label="트라이던트 탈출맵 영상을 현재 화면에서 재생" class="youtube-launcher" data-youtube-id="4Oh-LRHgpRE" style="background-image:url('https://i.ytimg.com/vi/4Oh-LRHgpRE/hq720.jpg'),url('https://i.ytimg.com/vi/4Oh-LRHgpRE/hqdefault.jpg');" type="button"><span aria-hidden="true" class="youtube-play"></span><span class="youtube-caption"><span><strong>마인크래프트 트라이던트 탈출맵</strong>
-                    YouTube 영상</span><span class="youtube-open-label">여기서 재생 ▶</span></span></button>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<img alt="트라이던트 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;T&lt;/span&gt;'" src="trident.png"/>
-<div class="project-logo-text">
-<small>Escape Map</small>
-<strong>TRIDENT</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 03</span>
-<h3>트라이던트</h3>
-<p>트라이던트 이동 기믹을 활용한 탈출맵입니다.</p>
-<div class="tags">
-<span class="tag">탈출맵</span>
-<span class="tag">기믹 설계</span>
-<span class="tag">레벨 디자인</span>
-</div>
-<div class="project-links">
-<a class="source-link" href="https://www.youtube.com/watch?v=4Oh-LRHgpRE" rel="noopener noreferrer" target="_blank">영상 보기 ↗</a>
-<a class="trident-site-link" href="https://trident.creatorlink.net/index#" rel="noopener noreferrer" target="_blank">트라이던트 사이트 ↗</a>
-</div>
-<div aria-label="트라이던트 관련 외부 링크" class="external-links">
-<p class="external-links-title"><img alt="YouTube" class="video-platform-logo" src="https://cdn.simpleicons.org/youtube/FF0000"/>플레이 영상</p>
-<a class="external-link" href="https://youtu.be/FwtYeDN84ag?si=HWDSGsUknb28qJwj" rel="noopener noreferrer" target="_blank">공룡님</a>
-<a class="external-link" href="https://youtu.be/O2Q_X2yxrtc?si=eYHN_llKYRJ4LHZ2" rel="noopener noreferrer" target="_blank">악어님</a>
-<a class="external-link" href="https://youtu.be/hnNaB1JG7ac?si=SHg4z-XuPrZnWH7V" rel="noopener noreferrer" target="_blank">양띵님</a>
-</div>
-</div>
-</article>
-<!-- 오버더월 -->
-<article class="project reverse reveal">
-<div class="media-box youtube">
-<button aria-label="오버더월 서버 영상을 현재 화면에서 재생" class="youtube-launcher" data-youtube-id="tVPzYUxPLA4" style="background-image:url('https://i.ytimg.com/vi/tVPzYUxPLA4/hq720.jpg'),url('https://i.ytimg.com/vi/tVPzYUxPLA4/hqdefault.jpg');" type="button"><span aria-hidden="true" class="youtube-play"></span><span class="youtube-caption"><span><strong>오버더월 OTW 서버 PV</strong>
-                    YouTube 영상</span><span class="youtube-open-label">여기서 재생 ▶</span></span></button>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<img alt="오버더월 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;OTW&lt;/span&gt;'" src="https://unavatar.io/youtube/%40OVERTHEWALL_Official"/>
-<div class="project-logo-text">
-<small>Server Project</small>
-<strong>OVER THE WALL</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 04</span>
-<h3>오버더월 서버</h3>
-<p>서버 시스템과 화면 구성을 작업했습니다.</p>
-<div class="tags">
-<span class="tag">서버 시스템</span>
-<span class="tag">커스텀 콘텐츠</span>
-<span class="tag">UI · Modeling</span>
-</div>
-<a class="source-link" href="https://youtu.be/tVPzYUxPLA4?si=v7rqAFaWaV71z8sF" rel="noopener noreferrer" target="_blank">영상 보기 ↗</a>
-</div>
-</article>
-<!-- 좀비 서버 -->
-<article class="project reveal">
-<div class="media-box">
-<div class="twitter-shell">
-<blockquote class="twitter-tweet" data-align="center" data-dnt="true" data-theme="dark">
-<p>좀비 서버 플레이 영상</p>
-<a href="https://x.com/redictw/status/1896610921499463895">X 원본 영상 불러오기 ↗</a>
-</blockquote>
-<noscript>
-<div class="tweet-fallback">
-<strong>좀비 서버 영상</strong>
-<p>영상을 보려면 원본 X 게시물을 열어 주세요.</p>
-<a class="btn btn-ghost" href="https://x.com/redictw/status/1896610921499463895/video/1">X에서 보기</a>
-</div>
-</noscript>
-</div>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<img alt="좀비 서버 영상 계정 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;Z&lt;/span&gt;'" src="https://unavatar.io/x/redictw"/>
-<div class="project-logo-text">
-<small>Gameplay Showcase</small>
-<strong>ZOMBIE SERVER</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 05</span>
-<h3>좀비 서버</h3>
-<p>좀비 콘텐츠와 게임 진행 시스템을 만들었습니다.</p>
-<div class="tags">
-<span class="tag">좀비 콘텐츠</span>
-<span class="tag">게임 시스템</span>
-<span class="tag">플레이 영상</span>
-</div>
-<a class="source-link" href="https://x.com/redictw/status/1896610921499463895/video/1" rel="noopener noreferrer" target="_blank">원본 보기 ↗</a>
-</div>
-</article>
-<!-- 나루의 한탕 -->
-<article class="project reverse reveal">
-<div class="media-box">
-<div class="twitter-shell">
-<blockquote class="twitter-tweet" data-align="center" data-dnt="true" data-theme="dark">
-<p>나루의 한탕 프로젝트 종료 영상</p>
-<a href="https://x.com/Naru_0417_/status/2067626146460729571">X 원본 영상 불러오기 ↗</a>
-</blockquote>
-<noscript>
-<div class="tweet-fallback">
-<strong>나루의 한탕</strong>
-<p>영상을 보려면 원본 X 게시물을 열어 주세요.</p>
-<a class="btn btn-ghost" href="https://x.com/Naru_0417_/status/2067626146460729571">X에서 보기</a>
-</div>
-</noscript>
-</div>
-</div>
-<div class="project-info">
-<div class="project-logo">
-<img alt="나루 로고" onerror="this.outerHTML='&lt;span class=&quot;logo-fallback&quot;&gt;NARU&lt;/span&gt;'" src="https://unavatar.io/x/Naru_0417_"/>
-<div class="project-logo-text">
-<small>Custom Server</small>
-<strong>NARU'S PROJECT</strong>
-</div>
-</div>
-<span class="project-no">PROJECT 06</span>
-<h3>나루의 한탕</h3>
-<p>서버 시스템, UI, 모델링 및 운영까지 1인 개발서버</p>
-<div class="tags">
-<span class="tag">서버 제작</span>
-<span class="tag">커스텀 UI</span>
-<span class="tag">모델링</span>
-</div>
-<a class="source-link" href="https://x.com/Naru_0417_/status/2067626146460729571" rel="noopener noreferrer" target="_blank">원본 보기 ↗</a>
-</div>
-</article>
-</div>
-</div>
-</section>
-<section id="career">
-<div class="container career">
-<div class="career-copy reveal">
-<p class="eyebrow">Career</p>
-<h2>경력</h2>
-<p>학교, 프로젝트, 공모전, 외주 작업 경험입니다</p>
-</div>
-<div class="timeline">
-<article class="timeline-item reveal">
-<h3>하얼빈공업대학교 컴퓨터공학과 입학</h3>
-<p>컴퓨터공학 전공</p>
-</article>
-<article class="timeline-item reveal">
-<h3>前 운학TV 팀 소속 개발자</h3>
-<p>마인크래프트 서버 및 시스템 개발 등 팀 프로젝트 제작</p>
-</article>
-<article class="timeline-item reveal">
-<h3>네이버 × 샌드박스 에듀케이션 마·초·고 프로젝트</h3>
-<p>교육형 마인크래프트 프로젝트 참여</p>
-</article>
-<article class="timeline-item reveal">
-<h3>여시재 마인크래프트 미래도시 공모전 우수상</h3>
-<p>미래도시 공모전 우수상</p>
-</article>
-<article class="timeline-item reveal">
-<h3>오버더월 · 좀비 서버 · 나루의 한탕 · 트라이던트</h3>
-<p>서버 시스템, UI, 모델링 제작</p>
-</article>
-<article class="timeline-item reveal">
-<h3>서버 제작 및 펠월드·일러스트 외주 다수</h3>
-<p>외주 제작 및 납품 경험</p>
-</article>
-</div>
-</div>
-</section>
-<section id="skills">
-<div class="container">
-<div class="section-head reveal">
-<div>
-<p class="eyebrow">Skills</p>
-<h2>할 수 있는 일</h2>
-</div>
-</div>
-<div class="capabilities">
-<article class="capability reveal">
-<div class="capability-icon">&lt;/&gt;</div>
-<h3>서버 시스템 개발</h3>
-<p>게임 로직, 이벤트, 유저 데이터</p>
-</article>
-<article class="capability reveal">
-<div class="capability-icon">UI</div>
-<h3>화면·UI 구성</h3>
-<p>메뉴, HUD, 인벤토리 화면</p>
-</article>
-<article class="capability reveal">
-<div class="capability-icon">3D</div>
-<h3>모델링·리소스·일러스트 디자인</h3>
-<p>커스텀 모델, 리소스, 썸네일과 그래픽 디자인 제작</p>
-</article>
-<article class="capability reveal">
-<div class="capability-icon">UX</div>
-<h3>플레이 경험 설계</h3>
-<p>게임 흐름과 피드백 구성</p>
-</article>
-<article class="capability reveal">
-<div class="capability-icon">DB</div>
-<h3>데이터와 운영 구조</h3>
-<p>진행도와 기록 데이터 관리</p>
-</article>
-<article class="capability reveal">
-<div class="capability-icon">PM</div>
-<h3>협업과 외주 제작</h3>
-<p>요구사항 정리부터 납품까지</p>
-</article>
-</div>
-</div>
-</section>
-<section id="contact">
-<div class="container">
-<div class="contact reveal">
-<p class="eyebrow">Contact</p>
-<h2>외주 문의</h2>
-<p>마인크래프트 및 타게임 콘텐츠 개발에 관한 문의는 디스코드에서 확인할 수 있습니다!</p>
-<div class="contact-channels">
-<a aria-label="디스코드" class="contact-channel discord-channel" href="https://discord.gg/G4wv46M4G" rel="noopener noreferrer" target="_blank" title="디스코드">
-<span aria-hidden="true" class="contact-channel-icon"><img alt="" class="discord-logo" src="https://cdn.simpleicons.org/discord/FFFFFF"/></span>
-</a>
-<a aria-label="이메일" class="contact-channel email-channel" href="mailto:ymy.develop@gmail.com" title="이메일">
-<span aria-hidden="true" class="contact-channel-icon">✉</span>
-</a>
-<a aria-label="X" class="contact-channel x-channel" href="https://x.com/plum_o3o" rel="noopener noreferrer" target="_blank" title="X">
-<span aria-hidden="true" class="contact-channel-icon">𝕏</span>
-</a>
-</div>
-</div>
-</div>
-</section>
-</main>
-<footer>
-<div class="container footer-inner">
-<span>© <span id="year">Minecraft Server Portfolio</span> Server Developer Portfolio.</span>
-<span>Videos and source pages belong to their respective platforms and creators.</span>
-</div>
-</footer>
-<script async="" charset="utf-8" src="https://platform.twitter.com/widgets.js"></script>
-<script>
-    const topbar = document.getElementById("topbar");
-    const menuBtn = document.getElementById("menuBtn");
-    const navLinks = document.getElementById("navLinks");
-    const themeToggle = document.getElementById("themeToggle");
-    const revealItems = document.querySelectorAll(".reveal");
+  <header class="topbar">
+    <nav class="container nav" aria-label="주요 메뉴">
+      <a class="brand" href="#top" aria-label="CHOROK Studio 홈"><span class="brand-mark"><img src="assets/chorok-studio-logo.png" alt=""></span><span>CHOROK<br><small>GAME CONTENT STUDIO</small></span></a>
+      <ul class="nav-links"><li><a href="#top">메인</a></li><li><a href="#archive">참여 프로젝트</a></li><li><a href="#services">제작 서비스</a></li><li><a href="#career">경력</a></li><li><a href="#contact">문의</a></li></ul>
+      <a class="nav-cta" href="#contact">외주 문의 ↗</a>
+    </nav>
+  </header>
 
-    const setTheme = (theme) => {
-      const dark = theme === "dark";
-      document.documentElement.dataset.theme = dark ? "dark" : "light";
-      themeToggle.textContent = dark ? "☀" : "☾";
-      themeToggle.setAttribute("aria-label", dark ? "밝은 테마로 전환" : "어두운 테마로 전환");
-      themeToggle.title = themeToggle.getAttribute("aria-label");
-      try { localStorage.setItem("portfolio-theme", dark ? "dark" : "light"); } catch (error) {}
+  <main>
+    <section class="hero" id="top" aria-label="CHOROK Studio 소개">
+      <div class="hero-background" id="heroBackground"></div>
+      <div class="container hero-content">
+        <div class="hero-copy">
+          <p class="kicker">GAME CONTENT STUDIO</p>
+          <h1>MAKE<br><em>WORLDS</em><br>MATTER</h1>
+          <p class="hero-platforms">마인크래프트, 팰월드, 프로젝트 좀보이드를 좋아하는 사람이 모인 곳</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="archive">
+      <div class="container">
+        <div class="archive-head"><div><p class="section-label">SELECTED PROJECTS</p><h2>참여한 프로젝트</h2></div></div>
+        <div class="world-grid">
+          <a class="world-card wide tall" href="https://x.com/Naru_0417_/status/2067626146460729571" target="_blank" rel="noopener noreferrer"><img src="assets/worlds/naru-server.jpg" alt="나루의 한탕 서버"><div class="world-card-label"><small>CUSTOM SERVER ↗</small><strong>나루의 한탕</strong></div></a>
+          <a class="world-card tall" href="assets/worlds/a9.jfif" data-project-preview><img src="assets/worlds/a9.jfif" alt="14DAYS 좀비 서버"><div class="world-card-label"><small>SERVER PROJECT ↗</small><strong>14DAYS ZOMBIE SERVER</strong></div></a>
+          <a class="world-card" href="https://youtu.be/tVPzYUxPLA4?si=v7rqAFaWaV71z8sF" target="_blank" rel="noopener noreferrer"><img src="assets/worlds/a8.jfif" alt="오버더월 서버"><div class="world-card-label"><small>SERVER PROJECT ↗</small><strong>OVER THE WALL</strong></div></a>
+          <a class="world-card" href="https://trident.creatorlink.net/index#" target="_blank" rel="noopener noreferrer"><img src="assets/worlds/trident-cover.png" alt="트라이던트 탈출맵"><div class="world-card-label"><small>ESCAPE MAP ↗</small><strong>TRIDENT</strong></div></a>
+          <a class="world-card" href="https://youtu.be/6X_ZM3HRnFo?si=APxLUBRxwX7CnUEd" target="_blank" rel="noopener noreferrer"><img src="https://i.ytimg.com/vi/E2JeeE8XQAI/maxresdefault.jpg" alt="여시재 마인크래프트 미래도시 공모전 영상 썸네일"><div class="world-card-label"><small>AWARD WINNING ↗</small><strong>여시재 미래도시 공모전</strong></div></a>
+          <a class="world-card" href="https://tv.naver.com/v/1692622" target="_blank" rel="noopener noreferrer"><iframe loading="lazy" src="https://tv.naver.com/embed/1692622" title="네이버 × 샌드박스 마·초·고 프로젝트 영상"></iframe><div class="world-card-label"><small>EDUCATION PROJECT ↗</small><strong>네이버 × 샌드박스 마·초·고</strong></div></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="capabilities" id="services">
+      <canvas class="service-particles" id="serviceParticles" aria-hidden="true"></canvas>
+      <div class="container"><p class="section-label">WHAT WE BUILD</p><h2>서비스</h2>
+        <div class="capability-grid">
+          <a class="capability" href="https://tv.naver.com/v/1692622" target="_blank" rel="noopener noreferrer"><span class="capability-number">01 / PLANNING</span><h3>콘텐츠 기획</h3><p>세계관, 플레이 루프, 퀘스트와 이벤트를 설계한 마·초·고 프로젝트 보기</p></a>
+          <a class="capability" href="https://x.com/redictw/status/1868301611359224236?s=20" target="_blank" rel="noopener noreferrer"><span class="capability-number">02 / SYSTEM</span><h3>서버 시스템</h3><p>게임 로직, 데이터, 운영 기능을 구축한 좀비 서버 프로젝트 보기</p></a>
+          <a class="capability" href="builds.html"><span class="capability-number">03 / WORLD</span><h3>맵·건축 제작</h3><p>세계관을 완성하고 오래 기억될 장면을 건축합니다</p></a>
+          <a class="capability" href="https://x.com/Naru_0417_/status/2067626146460729571" target="_blank" rel="noopener noreferrer"><span class="capability-number">04 / ART</span><h3>모델링·리소스</h3><p>커스텀 리소스와 세계를 구현한 나루의 한탕 보기</p></a>
+          <a class="capability" href="https://youtu.be/tVPzYUxPLA4?si=v7rqAFaWaV71z8sF" target="_blank" rel="noopener noreferrer"><span class="capability-number">05 / INTERFACE</span><h3>UI·연출 디자인</h3><p>플레이 흐름과 장면 연출을 구현한 오버더월 보기</p></a>
+          <a class="capability" href="#contact"><span class="capability-number">06 / DELIVERY</span><h3>외주·협업 제작</h3><p>요구사항 정리부터 테스트와 납품까지 외주 문의하기</p></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="career" id="career">
+      <div class="container career-layout">
+        <div><p class="section-label">CAREER</p><h2>경력</h2></div>
+        <div class="career-list">
+          <article class="career-item"><small>TEAM</small><div><h3>전 운학 TV 팀 소속</h3><p>마인크래프트 서버 및 시스템 개발 등 팀 프로젝트 제작</p></div></article>
+          <article class="career-item"><small>PROJECT</small><div><h3>네이버 × 샌드박스 에듀케이션 마·초·고 프로젝트</h3><p>교육형 마인크래프트 프로젝트 참여</p></div></article>
+          <article class="career-item"><small>AWARD</small><div><h3>여시재 마인크래프트 미래도시 공모전 우수상</h3><p>미래도시 공모전 우수상 수상</p></div></article>
+          <article class="career-item"><small>WORK</small><div><h3>타 게임 서버 외주 다수</h3><p>팰월드·프로젝트 좀보이드 개발 및 납품 경험</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact">
+      <div class="container"><h2>당신의 상상을 현실로 만들어드립니다</h2><p class="section-intro">스트리머와 시청자가 함께 즐기고, 방송의 재미가 플레이로 이어지는 서버를 제작합니다</p><div class="contact-actions"><a class="button button-primary" href="https://discord.gg/G4wv46M4G" target="_blank" rel="noopener noreferrer">Discord로 문의 ↗</a><a class="button button-secondary" href="mailto:ymy.develop@gmail.com">이메일 보내기</a><a class="button button-secondary" href="https://x.com/plum_o3o" target="_blank" rel="noopener noreferrer">𝕏 @plum_o3o ↗</a></div></div>
+    </section>
+  </main>
+
+  <dialog class="project-viewer" id="projectViewer" aria-label="14DAYS ZOMBIE SERVER 전체 화면 이미지">
+    <button type="button" aria-label="닫기">×</button>
+    <img src="assets/worlds/a9.jfif" alt="14DAYS 좀비 서버 전체 이미지">
+  </dialog>
+
+  <footer><div class="container footer-inner"><span>© <span id="year"></span> CHOROK Studio</span><span>Game Content Development Studio</span></div></footer>
+
+  <script>
+    const slides = [
+      "assets/worlds/a1.jfif", "assets/worlds/a2.jfif", "assets/worlds/a3.jfif",
+      "assets/worlds/a4.jfif", "assets/worlds/a5.jfif", "assets/worlds/a7.jfif",
+      "assets/worlds/a8.jfif", "assets/worlds/a9.jfif", "assets/worlds/a12.jfif",
+      "assets/worlds/a14.jfif", "assets/worlds/a16.jfif"
+    ];
+    const background = document.getElementById("heroBackground");
+    let activeSlide = 0;
+    let interval;
+    const selectSlide = (next) => {
+      activeSlide = next;
+      background.style.backgroundImage = `url("${slides[next]}")`;
     };
-
-    setTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
-    themeToggle.addEventListener("click", () => {
-      setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
-    });
-
-    window.addEventListener("scroll", () => {
-      topbar.classList.toggle("scrolled", window.scrollY > 12);
-    }, { passive: true });
-
-    menuBtn.addEventListener("click", () => {
-      const open = navLinks.classList.toggle("open");
-      menuBtn.setAttribute("aria-expanded", String(open));
-      menuBtn.textContent = open ? "✕" : "☰";
-    });
-
-    navLinks.querySelectorAll("a").forEach((link) => {
-      link.addEventListener("click", () => {
-        navLinks.classList.remove("open");
-        menuBtn.setAttribute("aria-expanded", "false");
-        menuBtn.textContent = "☰";
-      });
-    });
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("visible");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1 });
-
-    revealItems.forEach((item) => observer.observe(item));
+    const startSlides = () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      interval = window.setInterval(() => selectSlide((activeSlide + 1) % slides.length), 6200);
+    };
     document.getElementById("year").textContent = new Date().getFullYear();
-  </script>
-<script>
-    document.querySelectorAll(".youtube-launcher").forEach((launcher) => {
-      launcher.addEventListener("click", () => {
-        const videoId = launcher.dataset.youtubeId;
-        if (!videoId) return;
-
-        const iframe = document.createElement("iframe");
-        iframe.className = "youtube-inline-frame";
-        iframe.src =
-          "https://www.youtube.com/embed/" +
-          encodeURIComponent(videoId) +
-          "?autoplay=1&rel=0&playsinline=1";
-        iframe.title = launcher.getAttribute("aria-label") || "YouTube 영상";
-        iframe.allow =
-          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
-        iframe.referrerPolicy = "strict-origin-when-cross-origin";
-        iframe.allowFullscreen = true;
-
-        launcher.replaceWith(iframe);
+    window.addEventListener("load", () => window.setTimeout(() => document.getElementById("loader").classList.add("done"), 560));
+    const topbar = document.querySelector(".topbar");
+    const navLinks = [...document.querySelectorAll(".nav-links a")];
+    const setActiveNav = (id) => navLinks.forEach((link) => link.classList.toggle("active", link.getAttribute("href") === `#${id}`));
+    const sectionObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) setActiveNav(entry.target.id);
       });
+    }, { rootMargin: "-35% 0px -55% 0px", threshold: 0 });
+    navLinks.forEach((link) => {
+      const section = document.querySelector(link.getAttribute("href"));
+      if (section) sectionObserver.observe(section);
     });
-  </script>
-<script>
-  const siteLoader = document.getElementById("siteLoader");
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.addEventListener("scroll", () => topbar.classList.toggle("scrolled", window.scrollY > 24), { passive: true });
 
-  window.setTimeout(() => {
-    document.body.classList.add("site-ready");
-    siteLoader.classList.add("is-hidden");
-  }, reducedMotion ? 0 : 600);
-</script>
+    const services = document.getElementById("services");
+    const serviceCanvas = document.getElementById("serviceParticles");
+    if (services && serviceCanvas) {
+      const context = serviceCanvas.getContext("2d");
+      const pointer = { x: -1000, y: -1000 };
+      let bounds;
+      let particles = [];
+      let pixelRatio = 1;
+      const makeParticle = () => ({
+        x: Math.random() * bounds.width,
+        y: Math.random() * bounds.height,
+        vx: (Math.random() - .5) * .18,
+        vy: (Math.random() - .5) * .18,
+        size: 3 + Math.random() * 5,
+        alpha: .08 + Math.random() * .18
+      });
+      const resizeParticles = () => {
+        bounds = services.getBoundingClientRect();
+        pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        serviceCanvas.width = Math.max(1, Math.floor(bounds.width * pixelRatio));
+        serviceCanvas.height = Math.max(1, Math.floor(bounds.height * pixelRatio));
+        context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        particles = Array.from({ length: Math.max(42, Math.round(bounds.width / 24)) }, makeParticle);
+      };
+      const drawParticles = () => {
+        context.clearRect(0, 0, bounds.width, bounds.height);
+        particles.forEach((particle) => {
+          particle.x += particle.vx;
+          particle.y += particle.vy;
+          if (particle.x < -80) particle.x = bounds.width + 80;
+          if (particle.x > bounds.width + 80) particle.x = -80;
+          if (particle.y < -80) particle.y = bounds.height + 80;
+          if (particle.y > bounds.height + 80) particle.y = -80;
+          const dx = particle.x - pointer.x;
+          const dy = particle.y - pointer.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          const force = Math.max(0, 1 - distance / 320);
+          const offset = force * force * 76;
+          const x = particle.x + (dx / distance) * offset;
+          const y = particle.y + (dy / distance) * offset;
+          const size = particle.size + force * 5;
+          context.fillStyle = `rgba(185, 248, 116, ${particle.alpha + force * .46})`;
+          context.fillRect(x - size / 2, y - size / 2, size, size);
+        });
+        window.requestAnimationFrame(drawParticles);
+      };
+      services.addEventListener("pointermove", (event) => {
+        if (event.target.closest(".capability")) {
+          pointer.x = -1000;
+          pointer.y = -1000;
+          return;
+        }
+        const serviceBounds = services.getBoundingClientRect();
+        pointer.x = event.clientX - serviceBounds.left;
+        pointer.y = event.clientY - serviceBounds.top;
+      });
+      services.addEventListener("pointerleave", () => { pointer.x = -1000; pointer.y = -1000; });
+      new ResizeObserver(resizeParticles).observe(services);
+      resizeParticles();
+      drawParticles();
+    }
+    const buildGalleryLink = document.querySelector('.capability[href="builds.html"]');
+    if (buildGalleryLink) {
+      const capabilityCards = [...document.querySelectorAll(".capability")];
+      const resetCardPush = () => capabilityCards.forEach((card) => {
+        card.classList.remove("is-pushed");
+        card.style.removeProperty("--push-x");
+        card.style.removeProperty("--push-y");
+      });
+      capabilityCards.forEach((activeCard) => activeCard.addEventListener("pointermove", (event) => {
+        const activeBounds = activeCard.getBoundingClientRect();
+        activeCard.style.setProperty("--cap-origin-x", `${((event.clientX - activeBounds.left) / activeBounds.width) * 100}%`);
+        activeCard.style.setProperty("--cap-origin-y", `${((event.clientY - activeBounds.top) / activeBounds.height) * 100}%`);
+        const activeCenterX = activeBounds.left + activeBounds.width / 2;
+        const activeCenterY = activeBounds.top + activeBounds.height / 2;
+        capabilityCards.forEach((card) => {
+          if (card === activeCard) return;
+          const cardBounds = card.getBoundingClientRect();
+          const dx = cardBounds.left + cardBounds.width / 2 - activeCenterX;
+          const dy = cardBounds.top + cardBounds.height / 2 - activeCenterY;
+          const distance = Math.hypot(dx, dy) || 1;
+          card.style.setProperty("--push-x", `${(dx / distance) * 9}px`);
+          card.style.setProperty("--push-y", `${(dy / distance) * 9}px`);
+          card.classList.add("is-pushed");
+        });
+      }));
+      capabilityCards.forEach((card) => card.addEventListener("pointerleave", resetCardPush));
+      let isOpeningBuilds = false;
+      buildGalleryLink.addEventListener("click", (event) => {
+        if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || isOpeningBuilds) return;
+        event.preventDefault();
+        isOpeningBuilds = true;
+        const loader = document.getElementById("loader");
+        loader.classList.remove("done");
+        window.setTimeout(() => window.location.assign(buildGalleryLink.href), 620);
+      });
+    }
+    const projectViewer = document.getElementById("projectViewer");
+    const zombieProjectCard = document.querySelector("[data-project-preview]");
+    if (projectViewer && zombieProjectCard) {
+      zombieProjectCard.addEventListener("click", (event) => {
+        event.preventDefault();
+        projectViewer.showModal();
+      });
+      projectViewer.addEventListener("click", (event) => {
+        if (event.target === projectViewer) projectViewer.close();
+      });
+      projectViewer.querySelector("button").addEventListener("click", () => projectViewer.close());
+    }
+    startSlides();
+  </script>
 </body>
 </html>
