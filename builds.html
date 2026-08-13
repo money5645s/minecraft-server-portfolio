@@ -56,7 +56,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="portfolio.html#services" aria-label="포트폴리오로 돌아가기"><span class="brand-mark"><img src="assets/chorok-studio-logo.png" alt=""></span><span>CHOROK STUDIO</span></a>
-    <a class="back-link" href="portfolio.html#services">← 포트폴리오</a>
+    <a class="back-link" href="portfolio.html#services">← 돌아가기</a>
   </header>
   <main>
     <h1 class="gallery-title">갤러리</h1>
@@ -75,7 +75,7 @@
       </div>
     </div>
     <div class="progress" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
-    <p class="scroll-hint" id="scrollHint" aria-hidden="true">스크롤 해서 넘기기</p>
+    <p class="scroll-hint" id="scrollHint" aria-hidden="true">드래그 또는 스크롤로 넘기기</p>
     <div class="direction-hint" id="directionHint" aria-hidden="true"><span>‹</span><span>›</span></div>
   </main>
   <dialog class="lightbox" id="lightbox" aria-label="확대된 건축 이미지"><img id="lightboxImage" alt=""><p class="lightbox-credit">건축가 : 레딕</p><button class="lightbox-close" type="button" aria-label="확대 이미지 닫기">×</button></dialog>
@@ -246,7 +246,7 @@
     });
     window.addEventListener("load", () => window.requestAnimationFrame(() => {
       document.body.classList.add("gallery-ready");
-      showScrollHintWhenIdle(1900);
+      showScrollHintWhenIdle(560);
     }));
     groupStride = getGroupStride();
     loopBase = getLoopBase();
