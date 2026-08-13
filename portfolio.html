@@ -61,8 +61,11 @@
     .nav-links a::after { content: ""; position: absolute; right: 0; bottom: 0; left: 0; height: 1px; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .22s ease; }
     .nav-links a:hover, .nav-links a.active { color: var(--green); }
     .nav-links a.active::after { transform: scaleX(1); }
+    .nav-actions { display: flex; align-items: center; gap: 16px; }
     .nav-cta { padding: 13px 21px; border: 1px solid var(--green); border-radius: 999px; color: #081006; background: var(--green); box-shadow: 0 6px 18px rgba(185,248,116,.18); font-family: "Arial Black", "Noto Sans KR", Pretendard, sans-serif; font-size: .94rem; font-weight: 900; letter-spacing: -.045em; line-height: 1; transition: transform .2s ease, box-shadow .2s ease, background .2s ease; }
     .nav-cta:hover { background: #d0ff9c; box-shadow: 0 10px 24px rgba(185,248,116,.3); transform: translateY(-2px); }
+    .nav-login { color: rgba(255,255,255,.72); font-size: .82rem; font-weight: 800; letter-spacing: -.02em; cursor: pointer; transition: color .2s ease; }
+    .nav-login:hover { color: #fff; }
 
     .hero { position: relative; min-height: 100svh; display: flex; align-items: center; overflow: hidden; isolation: isolate; }
     .hero-background { position: absolute; inset: 0; z-index: -2; background: url("assets/worlds/a16.jfif") center / cover no-repeat; transform: scale(1.03); transition: background-image .8s ease; }
@@ -189,8 +192,8 @@
   <header class="topbar">
     <nav class="container nav" aria-label="주요 메뉴">
       <a class="brand" href="#top" aria-label="CHOROK Studio 홈"><span class="brand-mark"><img src="assets/chorok-studio-logo.png" alt=""></span><span>CHOROK STUDIO<br><small>GAME CONTENT STUDIO</small></span></a>
-      <ul class="nav-links"><li><a href="#top">메인</a></li><li><a href="#archive">참여 프로젝트</a></li><li><a href="#services">제작 서비스</a></li><li><a href="#career">경력</a></li><li><a href="#contact">문의</a></li></ul>
-      <a class="nav-cta" href="#contact">외주 문의</a>
+      <ul class="nav-links"><li><a href="#top">메인</a></li><li><a href="#archive">참여 프로젝트</a></li><li><a href="#services">서비스</a></li><li><a href="#career">경력</a></li><li><a href="#contact">문의</a></li></ul>
+      <div class="nav-actions"><a class="nav-cta" href="#contact">외주 문의</a><span class="nav-login">로그인</span></div>
     </nav>
   </header>
 
